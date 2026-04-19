@@ -198,11 +198,23 @@ end
 setupHealthConnection()
 updateManaUI()
 
--- Re-conecta a vida após o respawn
+-- Restaura estado do jogador e HUD após o respawn
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
     humanoid = character:WaitForChild("Humanoid")
+    
+    -- Restaura Vida (Setup já conecta e atualiza a barra)
     setupHealthConnection()
+    
+    -- Restaura Mana
+    ClientState.Mana = ClientState.MaxMana
+    updateManaUI()
+    
+    -- Restaura Frascos
+    ClientState.CurrentFlasks = ClientState.MaxFlasks
+    if flaskCountLabel then
+        flaskCountLabel.Text = tostring(ClientState.CurrentFlasks)
+    end
 end)
 
 -- Escuta mudanças na estamina vindas do StaminaController
