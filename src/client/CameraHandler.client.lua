@@ -4,6 +4,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+local ClientState = require(script.Parent:WaitForChild("ClientState"))
 
 -- Configurações da Câmera
 local CAMERA_OFFSET = Vector3.new(1.5, 3, 11) -- X positivo: ombro direito. Y: altura. Z: distância para trás
@@ -17,6 +18,7 @@ local MOUSE_SENSITIVITY = 0.003
 
 -- Travar o mouse no centro da tela e ocultá-lo para controle de terceira pessoa
 UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+UserInputService.MouseIconEnabled = false
 
 -- Aguardar o personagem carregar
 local character = player.Character or player.CharacterAdded:Wait()
@@ -50,21 +52,61 @@ end)
 local function updateCamera(deltaTime)
     if not humanoidRootPart then return end
 
-    -- [[ CÁLCULO DO CFRAME DA CÂMERA ]]
-    -- 1. Começamos criando uma matriz (CFrame) na posição atual do centro do personagem (HumanoidRootPart).
-    -- 2. Aplicamos a rotação horizontal (cameraAngleX no eixo Y).
-    -- 3. Aplicamos a rotação vertical (cameraAngleY no eixo X).
-    -- 4. Finalmente, multiplicamos pelo CAMERA_OFFSET. Isso projeta a câmera para a direita, cima e para trás,
-    --    respeitando a rotação que acabamos de definir, criando o efeito de ficar por cima do ombro.
-    local targetCameraCFrame = CFrame.new(humanoidRootPart.Position) 
-        * CFrame.Angles(0, cameraAngleX, 0) 
-        * CFrame.Angles(cameraAngleY, 0, 0) 
-        * CFrame.new(CAMERA_OFFSET)
+    local targetCameraCFrame
+    
+    -- Verifica se temos um alvo travado definido no ClientState
+    local lockedTargetPart = ClientState.LockedTarget
 
-    -- [[ SUAVIZAÇÃO COM LERP ]]
-    -- Em vez de atribuir o `targetCameraCFrame` diretamente à câmera (o que faria o movimento ser instantâneo),
-    -- usamos a função :Lerp() (Linear Interpolation). Ela move a câmera gradualmente de onde ela está agora
-    -- em direção ao alvo usando um fator (CAMERA_SMOOTHNESS). Isso gera um atraso agradável, passando a sensação de peso.
+    if lockedTargetPart and typeof(lockedTargetPart) == "Instance" and lockedTargetPart:IsA("BasePart") then
+        -- [[ MODO LOCK-ON ]]
+        -- Para evitar a sensação da câmera "entrar na terra", nivelamos a base do jogador.
+        -- Nós ignoramos a altura (Y) do inimigo para posicionar a câmera, mantendo-a sempre alta e atrás do ombro.
+        local myPos = humanoidRootPart.Position
+        local targetPos = lockedTargetPart.Position
+        
+        -- Vetor de direção completamente nivelado
+        local flatLookDir = Vector3.new(targetPos.X - myPos.X, 0, targetPos.Z - myPos.Z)
+        if flatLookDir.Magnitude > 0 then
+            flatLookDir = flatLookDir.Unit
+        else
+            flatLookDir = humanoidRootPart.CFrame.LookVector
+        end
+        
+        -- Cria uma base no jogador apontando para o alvo (apenas no eixo horizontal)
+        local baseCFrame = CFrame.lookAt(myPos, myPos + flatLookDir)
+        
+        -- Aplica o CAMERA_OFFSET relativo a essa base nivelada.
+        -- Como a base não inclina para baixo, a câmera sempre ficará `CAMERA_OFFSET.Y` studs acima do jogador.
+        local camPos = (baseCFrame * CFrame.new(CAMERA_OFFSET)).Position
+        
+        -- Ponto focal: miramos um pouco acima do centro do inimigo (ex: peito/cabeça) para a câmera não apontar pro chão
+        local focusPos = targetPos + Vector3.new(0, 1.5, 0)
+        
+        -- Faz a câmera final olhar para o ponto focal a partir da nova posição
+        targetCameraCFrame = CFrame.lookAt(camPos, focusPos)
+        
+        -- Atualizamos os ângulos internos do mouse para não dar "tranco" ao destravar
+        -- Pegamos a rotação da câmera final para manter a mesma inclinação que ela já estava
+        local rx, ry, rz = targetCameraCFrame:ToEulerAnglesYXZ()
+        cameraAngleX = ry
+        cameraAngleY = rx
+    else
+        -- [[ MODO OVER-THE-SHOULDER NORMAL ]]
+        -- 1. Matriz na posição atual do centro do personagem.
+        -- 2. Aplicamos a rotação horizontal e vertical armazenadas.
+        -- 3. Multiplicamos pelo CAMERA_OFFSET para projetar para direita, cima e trás.
+        targetCameraCFrame = CFrame.new(humanoidRootPart.Position) 
+            * CFrame.Angles(0, cameraAngleX, 0) 
+            * CFrame.Angles(cameraAngleY, 0, 0) 
+            * CFrame.new(CAMERA_OFFSET)
+    end
+
+    -- [[ MATEMÁTICA DA SUAVIZAÇÃO (LERP) ]]
+    -- Lerp significa "Linear Interpolation" (Interpolação Linear). É uma função que encontra um valor intermediário entre A e B.
+    -- A fórmula base é: Atual + (Destino - Atual) * Alpha (onde Alpha é o nosso CAMERA_SMOOTHNESS, 0.15).
+    -- Isso significa que, a cada frame, a câmera percorre 15% da distância que falta até o alvo.
+    -- O resultado matemático é uma curva assintótica: o movimento é rápido no começo (quando a distância é grande)
+    -- e desacelera suavemente conforme se aproxima do destino. Isso elimina o "pulo" instantâneo e gera um ótimo Game Feel!
     camera.CFrame = camera.CFrame:Lerp(targetCameraCFrame, CAMERA_SMOOTHNESS)
 
     -- [[ ROTAÇÃO DO PERSONAGEM (MECÂNICA SOULS) ]]
