@@ -41,13 +41,5 @@ Abaixo estão as mecânicas já implementadas neste protótipo:
 
 ---
 
-## 🚀 Como Rodar o Projeto (Setup)
 
-Este projeto foi construído utilizando o fluxo de trabalho do **Rojo**. Para testar o jogo na sua máquina:
-
-1. Clone este repositório:
-   ```bash
-   git clone [https://github.com/](https://github.com/)Ar4ujo009/Last-Ember.git
-
-   ------
-   Desenvolvido por Rafael Farias de Araujo / Ar4ujo009 | Portfólio de Game Development
+Desenvolvido por Rafael Farias de Araujo | Ar4ujo009 | Portfólio de Game Development

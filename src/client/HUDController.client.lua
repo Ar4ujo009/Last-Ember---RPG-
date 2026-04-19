@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ClientState = require(script.Parent:WaitForChild("ClientState"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -90,6 +91,57 @@ staminaFill.BorderSizePixel = 0
 staminaFill.Parent = staminaBg
 
 -- ==========================================
+-- HOTBAR DE EQUIPAMENTOS (ESTILO D-PAD)
+-- ==========================================
+local hotbarFrame = Instance.new("Frame")
+hotbarFrame.Name = "HotbarContainer"
+hotbarFrame.AnchorPoint = Vector2.new(0, 1)
+hotbarFrame.Position = UDim2.new(0, 40, 1, -40) -- Canto inferior esquerdo
+hotbarFrame.Size = UDim2.new(0, 150, 0, 150)
+hotbarFrame.BackgroundTransparency = 1
+hotbarFrame.Parent = hudGui
+
+-- Função auxiliar para criar slots
+local function createSlot(name, position, color, slotKey)
+    local slot = Instance.new("ImageLabel")
+    slot.Name = name
+    slot.Size = UDim2.new(0, 45, 0, 45)
+    slot.Position = position
+    slot.BackgroundColor3 = color
+    slot.BackgroundTransparency = 0.4
+    slot.BorderSizePixel = 0
+    slot.Image = "" -- Por enquanto sem ícone
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = slot
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+    stroke.Thickness = 2
+    stroke.Parent = slot
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = "" -- Deixando o slot visualmente vazio por enquanto
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    textLabel.TextScaled = true
+    textLabel.Parent = slot
+    
+    slot.Parent = hotbarFrame
+    return slot
+end
+
+-- Layout em Cruz: Topo(Magias), Baixo(Itens), Esquerda(Escudo), Direita(Espada)
+local slotTop = createSlot("SlotMagic", UDim2.new(0, 52, 0, 5), Color3.fromRGB(20, 20, 60), "Top")
+local slotBottom = createSlot("SlotItem", UDim2.new(0, 52, 0, 100), Color3.fromRGB(20, 60, 20), "Bottom")
+local slotLeft = createSlot("SlotShield", UDim2.new(0, 5, 0, 52), Color3.fromRGB(40, 40, 40), "Left")
+local slotRight = createSlot("SlotWeapon", UDim2.new(0, 100, 0, 52), Color3.fromRGB(60, 20, 20), "Right")
+
+-- ==========================================
 -- LÓGICA DE TWEEN (SUAVIZAÇÃO)
 -- ==========================================
 local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -137,7 +189,6 @@ end)
 -- ==========================================
 -- INTEGRAÇÃO COM MANA E TESTE
 -- ==========================================
-local ClientState = require(script.Parent:WaitForChild("ClientState"))
 local UserInputService = game:GetService("UserInputService")
 
 local function updateManaUI()

@@ -19,6 +19,7 @@ local CombatHandler = require(ReplicatedStorage:WaitForChild("Shared"):WaitForCh
 -- Pegamos a porta da Stamina que deixamos aberta no arquivo anterior
 local staminaController = script.Parent:WaitForChild("StaminaController")
 local requestStaminaDrain = staminaController:WaitForChild("RequestStaminaDrain")
+local ClientState = require(script.Parent:WaitForChild("ClientState"))
 
 -- ==========================================
 -- CONFIGURAÇÕES DE COMBATE
@@ -69,11 +70,26 @@ local function PerformAttack()
     isAttacking = false
 end
 
--- Captura do Clique Esquerdo
+-- Captura de Cliques (Esquerdo e Direito)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        -- Botão Esquerdo (Mão Direita - Ataque)
         PerformAttack()
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        -- Botão Direito (Mão Esquerda - Defesa/Ação Secundária)
+        local leftItem = ClientState.EquippedItems.Left
+        if leftItem and string.match(leftItem, "Escudo") then
+            ClientState.IsGuarding = true
+            print("Bloqueando...")
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        -- Ao soltar o Botão Direito, para de defender
+        ClientState.IsGuarding = false
     end
 end)

@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local ClientState = require(script.Parent:WaitForChild("ClientState"))
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -124,8 +125,12 @@ RunService.Heartbeat:Connect(function(deltaTime)
         end
         
     else
-        -- Caso não esteja correndo, a velocidade é a padrão
-        humanoid.WalkSpeed = WALK_SPEED
+        -- Caso não esteja correndo, verifica a defesa
+        if ClientState.IsGuarding then
+            humanoid.WalkSpeed = WALK_SPEED * 0.4 -- Reduz para 40% a velocidade de movimento
+        else
+            humanoid.WalkSpeed = WALK_SPEED
+        end
         
         -- E tentamos regenerar a stamina
         RegenStamina(deltaTime)
