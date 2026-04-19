@@ -53,11 +53,29 @@ healthFill.BackgroundColor3 = Color3.fromRGB(136, 0, 21) -- Vermelho Carmesim
 healthFill.BorderSizePixel = 0
 healthFill.Parent = healthBg
 
+-- Barra de Mana (Fundo)
+local manaBg = Instance.new("Frame")
+manaBg.Name = "ManaBackground"
+manaBg.Size = UDim2.new(0, 270, 0, 10) -- Intermediária entre vida e estamina
+manaBg.Position = UDim2.new(0, 60, 0, 25) -- Entre vida e estamina
+manaBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+manaBg.BackgroundTransparency = 0.6
+manaBg.BorderSizePixel = 0
+manaBg.Parent = hudFrame
+
+-- Barra de Mana (Preenchimento)
+local manaFill = Instance.new("Frame")
+manaFill.Name = "ManaFill"
+manaFill.Size = UDim2.new(1, 0, 1, 0)
+manaFill.BackgroundColor3 = Color3.fromRGB(0, 102, 204) -- Azul Royal
+manaFill.BorderSizePixel = 0
+manaFill.Parent = manaBg
+
 -- Barra de Estamina (Fundo)
 local staminaBg = Instance.new("Frame")
 staminaBg.Name = "StaminaBackground"
-staminaBg.Size = UDim2.new(0, 240, 0, 10) -- Ligeiramente menor que a de vida
-staminaBg.Position = UDim2.new(0, 60, 0, 28) -- Embaixo da barra de vida
+staminaBg.Size = UDim2.new(0, 240, 0, 10) -- Ligeiramente menor que a de mana
+staminaBg.Position = UDim2.new(0, 60, 0, 38) -- Embaixo da barra de mana
 staminaBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 staminaBg.BackgroundTransparency = 0.6
 staminaBg.BorderSizePixel = 0
@@ -114,4 +132,35 @@ staminaChangedEvent.Event:Connect(function(currentStamina, maxStamina)
     local targetSize = UDim2.new(scale, 0, 1, 0)
     local tween = TweenService:Create(staminaFill, tweenInfo, {Size = targetSize})
     tween:Play()
+end)
+
+-- ==========================================
+-- INTEGRAÇÃO COM MANA E TESTE
+-- ==========================================
+local ClientState = require(script.Parent:WaitForChild("ClientState"))
+local UserInputService = game:GetService("UserInputService")
+
+local function updateManaUI()
+    local scale = ClientState.Mana / ClientState.MaxMana
+    local targetSize = UDim2.new(scale, 0, 1, 0)
+    local tween = TweenService:Create(manaFill, tweenInfo, {Size = targetSize})
+    tween:Play()
+end
+
+-- Inicializa o visual
+updateManaUI()
+
+-- Teste de consumo/recuperação de Mana (Apenas para depuração)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.M then
+        -- Gasta 15 de mana
+        ClientState.Mana = math.clamp(ClientState.Mana - 15, 0, ClientState.MaxMana)
+        updateManaUI()
+    elseif input.KeyCode == Enum.KeyCode.N then
+        -- Recupera 15 de mana
+        ClientState.Mana = math.clamp(ClientState.Mana + 15, 0, ClientState.MaxMana)
+        updateManaUI()
+    end
 end)

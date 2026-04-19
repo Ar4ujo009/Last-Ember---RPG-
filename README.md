@@ -38,7 +38,6 @@ Abaixo estão as mecânicas já implementadas neste protótipo:
 | **Luau** | Linguagem de programação para scripts (Client/Server) |
 | **Rojo** | Sincronização de código com sistema de arquivos local |
 | **Git / GitHub** | Controle de versão e versionamento semântico |
-| **Google Antigravity** | Assistente de IA para pair programming e geração de lógicas |
 
 ---
 
